@@ -1,0 +1,81 @@
+import numpy as np
+import glob
+import read_sph_data as rsd
+import warnings
+from constants import *
+import matplotlib.pyplot as plt
+
+warnings.filterwarnings('ignore')
+
+simdir = "/home/hatfull/data/ulfhednar/dynamical/d003u_b002u_1.195M_0.32M_40k_1_1.2G0.32C0.32D_ncooling1/"
+datafiles = sorted(glob.iglob(simdir+'out*.sph'))
+
+try:
+    Ekin_infty_arr = np.load("Ekin_infty_arr.npy")
+    mejecta_arr = np.load("mejecta_arr.npy")
+    t_code = np.load("t_code.npy")
+except:
+    print "Could not find Ekin_infty_arr.npy, mejecta_arr.npy, and/or t_code.npy"
+    print "Creating files..."
+    Ekin_infty_arr = np.array([])
+    mejecta_arr = np.array([])
+    t_code = np.array([])
+    
+    for datafile in datafiles:
+        # See get_ebind.f for data file format.
+        #data_code = np.loadtxt(datafile)
+        data_code,header = rsd.read(datafile,return_header=True,fmt_extra='f8,f8,f8',size_extra=24) # Manually added temperature to output
+        r_code = np.sqrt(data_code[:,0]**2. + data_code[:,1]**2. + data_code[:,2]**2.)
+        data_code = data_code[np.argsort(r_code)] #Sort the data by radius just for ease
+        
+        r_code = np.sqrt(data_code[:,0]**2. + data_code[:,1]**2. + data_code[:,2]**2.)
+        
+        m_code = data_code[:,3]
+        v2_code = data_code[:,6]**2. + data_code[:,7]**2. + data_code[:,8]**2.
+        u_code = data_code[:,12] / G / Ms * Rs
+        
+        w_code = data_code[:,14] / G / Ms * Rs
+        
+        ekin_code = 0.5*np.sqrt(v2_code) / G /Ms *Rs
+        etot_code = 0.5*v2_code + u_code + w_code
+        
+        indxs = np.where(etot_code >= 0)[0]
+        
+        mejecta = np.sum(m_code[indxs]/Ms)
+        Ekin_infty = np.sum(0.5 * m_code[indxs]/Ms * v2_code[indxs] * (Rs / codeunits)**2.) #ergs
+        
+        Ekin_infty_arr = np.append(Ekin_infty_arr, Ekin_infty)
+        mejecta_arr = np.append(mejecta_arr, mejecta)
+        
+        t_code = np.append(t_code, header[9])
+
+    np.save("Ekin_infty_arr",Ekin_infty_arr)
+    np.save("mejecta_arr",mejecta_arr)
+    np.save("t_code",t_code)
+        
+
+fig, (ax1, ax2) = plt.subplots(2,1,sharex=True,figsize=(8,8))
+
+ax1.plot(t_code/codeunits * days, Ekin_infty_arr/1e15,color='k')
+ax2.plot(t_code/codeunits * days, mejecta_arr*Ms,color='k')
+
+ax1.set_ylabel("$E_{\\rm{kin}}^{\\infty}$ [10$^{15}$ ergs s$^{-1}$]")
+ax2.set_ylabel("$m_{\\rm{ejecta}}$ [$M_{\\odot}$]")
+
+ax2.set_xlabel("time [days]")
+
+ax1.legend()
+ax2.legend()
+
+ax1.tick_params(axis='both',which='both',direction='in',top=True,bottom=True,left=True,right=True)
+ax2.tick_params(axis='both',which='both',direction='in',top=True,bottom=True,left=True,right=True)
+
+plt.tight_layout()
+plt.suptitle(simdir.split("/")[-2])
+fig.subplots_adjust(top=0.95,hspace=0)
+
+print simdir.split("/")[-2].split("_")[0]
+
+plt.savefig(simdir.split("/")[-2].split("_")[0]+"_Ekin_infty_mejecta_time.png")
+
+plt.show()

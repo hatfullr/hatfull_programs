@@ -1,0 +1,15 @@
+#!/bin/bash
+
+chmod 440 out*.sph
+
+list=$(ls -t out*.sph)
+
+end=$(printf "%s\n" ${list[@]} | head -n1)
+start=$(printf "%s\n" ${list[@]} | tail -n1)
+
+times=($(stat --format=%Y $start $end))
+
+time=$(echo "(${times[1]} - ${times[0]})/3600" | bc -l)
+
+echo "Simulation took $time wall hours"
+

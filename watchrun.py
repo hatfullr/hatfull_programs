@@ -1,0 +1,101 @@
+# watchrun.py
+# Author: Roger Hatfull
+# Institution: University of Alberta
+# June 22nd, 2017
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
+import matplotlib.ticker as mtick
+import matplotlib as mpl
+import matplotlib
+
+print matplotlib.__version__
+
+plt.ion()
+
+def my_format(x,p):
+    #This will simply format the strings used to show numbers on the axes.
+    #This makes use of LaTeX notations
+    #Make multiples of 10 (including zero) an integer, like Supermongo
+    if x % 10 == 0: x = int(abs(x))
+    if 'e' in str(x): #If there is an exponent
+        exp=int(str(x)[str(x).index('e')+1:]) #Convert that exponent to an integer
+        return "$"+str(x)[:str(x).index('e')]+"\\times10^{"+str(exp)+"}$" #Return the number in Supermongo-like scientific notation ("2x10^5")
+    else:
+        return "$"+str(x)+"$" #Just return the number
+
+#Set some matplotlib default parameters to make it look more like Supermongo
+mpl.rcParams['lines.linewidth'] = 0.5
+mpl.rcParams['axes.prop_cycle'] = mpl.cycler('color',['k'])    
+mpl.rcParams['xtick.major.size'] = 10
+mpl.rcParams['xtick.major.width'] = 0.5
+mpl.rcParams['xtick.minor.size'] = 5
+mpl.rcParams['xtick.minor.width'] = 0.5
+mpl.rcParams['xtick.top'] = True
+mpl.rcParams['xtick.direction'] = 'in'
+mpl.rcParams['ytick.major.size'] = 10
+mpl.rcParams['ytick.major.width'] = 0.5
+mpl.rcParams['ytick.minor.size'] = 5
+mpl.rcParams['ytick.minor.width'] = 0.5
+mpl.rcParams['ytick.right'] = True
+mpl.rcParams['ytick.direction'] = 'in'
+mpl.rcParams['font.size'] = 12
+mpl.rcParams['font.weight'] = 300
+
+fig = plt.gcf() #Make the figure object
+DPI = fig.get_dpi() #Get the DPI on the monitor
+#Set the figure size to the Supermongo default 800x800 (account for the little bar that appears on the bottom of python plots)
+fig.set_size_inches(800.0/float(DPI),835.0/float(DPI))
+fig.subplots_adjust(left=(3500.+3000.)/32767.,
+                    right=31000./32767.,
+                    top=31000./32767.,
+                    bottom=3500./32767.)
+
+plt.subplots_adjust(hspace=0) #Take out vertical spaces between subplots
+
+#Infinite loop can be stopped by closing out of the figure (pressing "X") or with a Ctrl+C command to the prompt.
+while True:
+
+    data = np.loadtxt("energy0.sph") #Grab the data
+
+    #If there's no data yet, just hang out until there is some
+    if len(data) == 0: continue
+    
+    t = data[:,0]    #Use v 0 macro default of t    in column 1
+    epot = data[:,1] #Use v 0 macro default of epot in column 2
+    ekin = data[:,2] #Use v 0 macro default of ekin in column 3
+    eint = data[:,3] #Use v 0 macro default of eint in column 4
+    etot = data[:,4] #Use v 0 macro default of etot in column 5
+    
+    ax = []
+    
+    ax.append(plt.subplot(414)) #Make the bottom-most subplot
+    plt.plot(t,etot) #Plot Total Energy E
+    plt.ylabel("$\mathrm{E}$") #Make the y label
+    plt.xlabel("$\mathrm{time}$") #Make the x label
+    
+    ax.append(plt.subplot(413)) #Make the second-to-bottom subplot
+    plt.plot(t,ekin) #Plot Kinetic Energy T
+    plt.ylabel("$\mathrm{T}$") #Make the y label
+    
+    ax.append(plt.subplot(412)) #Make the second-to-top subplot
+    plt.plot(t,epot) #Plot Potential Energy W
+    plt.ylabel("$\mathrm{W}$") #Make the y label
+    
+    ax.append(plt.subplot(411)) #Make the top subplot
+    plt.plot(t,eint) #Plot the Internal Energy U
+    plt.ylabel("$\mathrm{U}$") #Make the y label
+
+    #Set the major and minor axes tick mark spacings
+    for i in ax:
+        i.xaxis.set_minor_locator(AutoMinorLocator())
+        i.yaxis.set_minor_locator(AutoMinorLocator())
+        i.yaxis.set_major_formatter(mtick.FuncFormatter(my_format))
+        i.xaxis.set_major_formatter(mtick.FuncFormatter(my_format))
+
+    #Remove tick xlabels on all subplots except the bottom one
+    for i in ax[1:]: i.set_xticklabels([])
+    
+    plt.pause(1) #Sleep for 1 second
+    plt.clf() #Clear the screen

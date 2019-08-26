@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#Give this program a file that contains the StarSmasher output which
+#contains lines such as " >>> SPHgrav_lib took 0.0266967 sec" etc.
+
+if [ -f $1 ]; then
+    awk '/end it./{print $5,sum;f=0} /1sthalf:/{sum=0;f=1} / >>> SPHgrav_lib took /{sum+=$4}' $1 > gputime_per_iter.dat
+else
+    echo "ERROR: File $1 not found."
+fi

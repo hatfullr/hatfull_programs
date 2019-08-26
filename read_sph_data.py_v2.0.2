@@ -1,0 +1,147 @@
+def read(filename,
+         return_header=False,
+         fmt_header= '2i'+    # ntot, nnopt (2*4=8)
+                     '5d'+    # hco, hfloor, sep0, tf, dtout (8*5=40)
+                     '2i'+    # nout, nit (2*4=8)
+                     'd'+     # t (8)
+                     'i'+     # nav (4)
+                     '3d'+    # alpha, beta, tjumpahead (3*8=24)
+                     '2i'+    # ngr, nrelax (4*2=8)
+                     '3d'+    # trelax, dt, omega2 (3*8=24)
+                     'i'+     # ncooling (4)
+                     'd'+     # erad (8)
+                     'i'+     # ndisplace (4)
+                     '3d',    # displacex, displacey, displacez (4*8=24),
+         fmt_dataline= 'f8,'+ # x
+                       'f8,'+ # y
+                       'f8,'+ # z
+                       'f8,'+ # am
+                       'f8,'+ # hp
+                       'f8,'+ # rho
+                       'f8,'+ # vx
+                       'f8,'+ # vy
+                       'f8,'+ # vz
+                       'f8,'+ # vxdot
+                       'f8,'+ # vydot
+                       'f8,'+ # vzdot
+                       'f8,'+ # u
+                       'f8,'+ # udot
+                       'f8,'+ # grpot
+                       'f8,'+ # meanmolecular
+                       'f4,'+ # cc
+                       'f8', # divv
+         fmt_extra='',
+         size_header=164,
+         size_dataline=156,
+         size_extra=0):
+    #Author: Roger Hatfull
+    #Institution: University of Alberta
+    #Date: 07/14/2017
+    #Version 2.0.2
+
+    
+    #Description:
+    #This is used to read in binary data output from StarSmasher simulations.
+
+    
+    #Instructions:
+    #   Place this file in your working directory and then import it using 'import read_sph_data as rsd'.
+    #   Use the read function as 'rsd.read(datafile)'. See the examples below for help.
+
+    
+    #Inputs:
+    # fmt_header       Specify a custom header format. Should be in the form of 'i3d2i' etc.
+    #                  where 'i' is a 4-byte integer, '3d' is 3 8-byte doubles, and '2i' is 2 4-byte integers.
+    #                  The leading junk and trailing endline are removed by default.
+    #
+    # fmt_dataline     Specify a custom format for each line of data after the header. Should be in the form
+    #                  'f8,f8,f8,f8,f8,f4,f8,' etc. where 'f8' is an 8-byte double and 'f4' is a 4-byte float
+    #                  (integer). The leading junk and trailing endline are removed by default.
+    #
+    # fmt_extra        Specify a custom format for any extra lines of data at the end of the data lines. This
+    #                  is a simpler alternative to defining your own fmt_dataline.
+    #
+    # size_header      Give the size (bytes) of the header. The leading junk and trailing endline are removed
+    #                  by default.
+    #
+    # size_dataline    Give the size (bytes) of each line of data. The trailing endline is removed by default.
+    #
+    # size_extra       Give the size (bytes) of your specified fmt_extra.
+
+    
+    #Examples:
+    #    import read_sph_data as rsd
+    #    datafile = 'out0000.sph'
+    #
+    #    data = rsd.read(datafile) #Read an output file
+    #    data, header = rsd.read(datafile,return_header=True) #Get data and header
+    #    data = rsd.read(datafile,extra=8,extra_fmt='f8')     #Read one extra 64-bit double on each line
+    #    data = rsd.read(datafile,extra=4,extra_fmt='i4')     #Read one extra 32-bit integer on each line
+    #    data = rsd.read(datafile,extra=8,extra_fmt='f8, f8') #Read two extra 64-bit doubles on each line
+
+    
+    #Troubleshooting:
+    #  1) Try running your python script again after a few seconds. If you are reading in a file as it's
+    #     being written, you will get an error.
+    #  2) Make sure the formats for your header and datalines are correct. If your simulation has
+    #     ncooling =/= 0, you may need to define your own format (check the format section below). If you
+    #     have defined your own formats, compare your formats to the code's write step in the 'dump' subroutine
+    #     in output.f. For your dataline format, try placing commas in different orders. Perhaps try removing
+    #     only the leading comma, or only the trailing comma, or try removing both.
+    #  3) Make sure the output file isn't corrupted. StarSmasher prints the total # of particles at the
+    #     beginning and the end of each file to check for corruption.
+
+    
+    #Format (header):
+    #   0     1     2     3      4     5    6     7     8   9  10    11     12       13      14     15
+    # ntot, nnopt, hco, hfloor, sep0, tf, dtout, nout, nit, t, nav, alpha, beta, tjumpahead, ngr, nrelax
+    #
+    #   16    17    18       19      20      21         22         23         24
+    # trelax, dt, omega2, ncooling, erad, ndisplace, displacex, displacey, displacez
+    
+    #Format (dataline):
+    # 0  1  2  3   4    5   6   7   8     9     10     11   12   13    14         15        16   17   (18)*     (19)*
+    # x, y, z, am, hp, rho, vx, vy, vz, vxdot, vydot, vzdot, u, udot, grpot, meanmolecular, cc, divv, (ueq)*, (tthermal)*
+    #
+    # * ncooling =/= 0
+
+    #This function will need to be updated every time a change is made to how the output
+    #files are written. See output.f, subroutine 'dump', and starsmasher.h for more
+    #information. Also, for reading extra stuff from the files, check the formatting for
+    #the struct module: https://docs.python.org/2/library/struct.html#format-characters
+    
+    #Changes:
+    #   2.0.2
+    #      - Now you can specify a custom header format and custom data format using fmt_header and fmt_dataline.
+    #
+    #   2.0.1
+    #      - Added compatibility for dynamical runs that have ncooling turned on.
+    #
+    #   2.0.0
+    #      - Basically completely revamped the program. It now runs ~100x faster, and I don't think it can be
+    #        significantly optimized any further.
+    #      - Only returns numpy arrays, for both the header and data. Thus, "asnparray" option is deprecated.
+    
+    import struct
+    import numpy as np
+    import sys
+
+    if fmt_extra != '': fmt_extra = ','+fmt_extra
+    dsize = size_dataline+size_extra+8
+    
+    with open(filename,'rb') as f:
+        header = np.asarray(struct.unpack('<i'+fmt_header+'d', f.read(4+size_header+8)))[1:-1]
+        lines = int(header[0])
+
+        try:
+            data = np.ndarray(shape=(1,lines),
+                              dtype=np.dtype(fmt_dataline+fmt_extra+',f8'),
+                              buffer=f.read(lines*(dsize)))[0].astype(dsize*'f8,').view(dtype='f8').reshape(lines,dsize)[:,:-1]
+        except:
+            print "read_sph_data.py (line 137):"
+            print "  Error: Failed to read '"+filename+"'. Make sure your fmt_dataline is correct. For example, if ncooling =/= 0, you need 2 more 'f8,' symbols."
+            sys.exit()
+            
+
+    if return_header: return data,header
+    else: return data

@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# Create a tarball of all ASCII files in the current directory
+# and all subdirectories. The tarball will be located in the
+# current directory and all ASCII files can be restored by using
+# the -d option or running tar -xvzpf comrpessASCII.tar.gz
+
+check () {
+    if [ $? -ne 0 ]; then
+	echo "ERROR"
+	exit 1
+    fi
+}
+
+myecho () {
+    if [ "$silent" = false ]; then
+	echo $@
+    fi
+}
+
+myrm () {
+    if [ "$preserve" = false ]; then
+	\rm -f $@
+    fi
+}
+
+OPTIND=1
+compress=true
+recursion=true
+silent=false
+preserve=false
+while getopts "dpnsh?" opt; do
+    case $opt in
+	d) # decompress tarball (default is to compress)
+	    compress=false
+	    ;;
+	p) # Do not remove ASCII files after compression
+	    preserve=true
+	    ;;
+	n) # Dont do things recursively
+	    recursion=false
+	    ;;
+	s) # Print messages
+	    silent=true
+	    ;;
+	h|\?) # Help message
+	    echo "Options are:"
+	    echo "   -d"
+	    echo "      Decompress compressASCII.tar.gz."
+	    echo "   -p"
+	    echo "      Preserve ASCII files (do not remove) after compression. During"
+	    echo "      decompression (-d option), preserves compressASCII.tar.gz"
+	    echo "   -n"
+	    echo "      No recursion. Compress files in the current directory only."
+	    echo "      Does nothing while decompressing (-d option)."
+	    echo "   -s"
+	    echo "      Silent. Do not display progress messages or other useful"
+	    echo "      information."
+	    echo "   -h|-?"
+	    echo "      Display this help message"
+	    echo ""
+	    echo "Examples:"
+	    echo "   compressASCII"
+	    echo "   compressASCII -d"
+	    exit 0
+	    ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ "$compress" = false ]; then # Decompress
+    if [ ! -f "compressASCII.tar.gz" ]; then
+	echo "ERROR: compressASCII.tar.gz not found in the current directory."
+	exit 1
+    fi
+    myecho "Decompressing compressASCII.tar.gz"
+    SIZE1=$(du -h compressASCII.tar.gz | awk '{print $1}')
+    tar -xzpf compressASCII.tar.gz
+    check
+    if [ "$preserve" = false ]; then
+	myecho "Removing compressASCII.tar.gz"
+    fi
+    myrm compressASCII.tar.gz
+    check
+    SIZE2=$(du -ch $(cat compressASCII.txt) | tail -1 | awk '{print $1}')
+    myecho "Disk space used by ASCII files increased from $SIZE1 to $SIZE2."
+    exit 0
+fi
+
+if [ -f "compressASCII.tar.gz" ]; then #Compressed file already exists and we aren't decompressing
+    echo "ERROR: compressASCII.tar.gz already exists. Either remove it or run"
+    echo "'compressASCII -d' or 'tar -xvzpf compressASCII.tar.gz' and try again."
+    exit 1
+fi
+
+myecho "Saving all filenames to temporary file compressASCII.txt"
+if [ "$recursion" = false ]; then
+    find . -maxdepth 1 -type f -not -name compressASCII.txt > compressASCII.txt
+else
+    find . -type f -not -name compressASCII.txt  > compressASCII.txt
+fi
+check
+myecho "Finding ASCII files"
+filenames=( $(file -e apptype -e encoding -e tokens -e cdf -e compress -e elf -e soft -e tar -Lp -F' ' -f compressASCII.txt | grep -v compressASCII.txt | grep "ASCII text" | awk '{print $1}') )
+check
+myecho "Removing temporary file compressASCII.txt"
+\rm -f compressASCII.txt
+check
+SIZE1=$(du -ch ${filenames[@]} | tail -1 | awk '{print $1}')
+myecho "Compressing $SIZE1 of ASCII files to compressASCII.tar.gz"
+if [ "$silent" = false ]; then
+    tar -cpf - ${filenames[@]} | pv -s $(du -cb ${filenames[@]} | tail -1 | awk '{print $1}') | gzip > compressASCII.tar.gz
+    check
+else
+    tar -cpf - ${filenames[@]} | gzip > compressASCII.tar.gz
+    check
+fi
+SIZE2=$(du -h compressASCII.tar.gz | awk '{print $1}')
+myecho "Size of ASCII files compressed from $SIZE1 to $SIZE2"
+if [ "$preserve" = false ]; then
+    myecho "Removing ASCII files"
+fi
+myrm ${filenames[@]}
+check
+myecho "Success."
+myecho "To list the contents, run 'tar -tvf compressASCII.tar.gz'."
+myecho "To decompress the files, run 'compressASCII -d' or 'tar -xvzpf compressASCII.tar.gz'"

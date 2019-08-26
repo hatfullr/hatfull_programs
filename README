@@ -1,0 +1,16 @@
+These programs require that you edit the directories in the
+first few lines to specify which data files you want them to
+read. Make sure you finish the directory with a '/'. For
+example, 'simdir = "/home/hatfull/place/"'.
+
+Be careful, because all of these files will need a model file
+with the same format as the *.mod.muse file. THIS IS NOT THE
+SAME FILE AS FOUND IN THE SIMULATION DIRECTORY!
+
+     energy_simps2.py
+     find_R.py
+     get_env_eng.py
+     graph_u_w.py
+     graph_w.py
+     get_model_details.py
+

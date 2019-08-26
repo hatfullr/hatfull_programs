@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Use this program to combine many energy*.sph files into one "energyX.sph" file,
+# while preserving the original files
+
+if [ -f energyX.sph ]; then
+    echo "energyX.sph file already exists. Please delete or rename it and try again!"
+    exit 1
+fi
+
+files=( $(\ls energy*.sph) )
+for i in ${files[@]}; do
+    cat $i >> energyX.sph
+done

@@ -1,0 +1,100 @@
+#!/bin/bash
+
+set -e # Exit on error
+
+postdir=$HOME/starsmasher_postprocessing/src
+if [ ! -d $postdir ]; then
+    echo "ERROR: $postdir does not exist."
+    exit 1
+fi
+
+if [[ "$(find . -maxdepth 1 -name 'out*.sph')" == "" ]]; then
+    echo "ERROR: This does not appear to be a StarSmasher simulation directory!"
+    exit 1
+fi
+
+if [ ! -f sph.input ]; then
+    echo "ERROR: Could not find sph.input"
+    exit 1
+fi
+
+profilefile=$(grep profilefile sph.input | cut -d"'" -f2)
+if [ $? -ne 0 ] || [[ "$profilefile" == "" ]]; then
+    echo "ERROR: Could not detect profilefile from sph.input"
+    exit 1
+fi
+
+
+ni=0100
+nf=0100
+ns=1
+run=1
+egrav=1
+nsph=0100
+
+mydir=energy_profile_comparison
+
+OPTIND=1 #Reset in case getopts has been used previously
+while getopts ":-:" opt; do
+    case "$opt" in
+	-) LONG_OPTARG="${OPTARG#*=}"
+	   OPTARG="${OPTARG%=*}"
+	   case $OPTARG in
+	       'ni') ni=$LONG_OPTARG
+		     ;;
+	       'nf') nf=$LONG_OPTARG
+		     ;;
+	       'ns') ns=$LONG_OPTARG
+		     ;;
+	       'run') run=$LONG_OPTARG
+		      ;;
+	       'egrav') egrav=$LONG_OPTARG
+			;;
+	       'nsph') nsph=$LONG_OPTARG
+		       ;;
+	       '') break # "--" terminates argument processing
+		   ;;
+	       *) echo "ERROR: illegal option --$OPTARG" >&2
+		  exit 1
+		  ;;
+	   esac
+	   ;;
+    esac
+done
+
+
+if [ ! -d $mydir ]; then
+    mkdir $mydir
+fi
+
+
+\cd $mydir
+
+\cp -p $postdir/enc .
+\cp -p $postdir/extract .
+\cp -p $postdir/sortit .
+\cp -p $postdir/new_table_opal_kap.tron .
+\cp -p $postdir/port_mesa_to_starsmash.py .
+\cp -p $postdir/mesa_pars.py .
+if [ ! -f sph.eos ]; then
+    \ln -s ../sph.eos .
+fi
+
+python port_mesa_to_starsmash.py -f ../$profilefile
+
+for i in $(seq -f "%04g" $ni $ns $nf); do
+    if [ ! -f out${i}.sph ]; then
+	\ln -s ../out${i}.sph .
+    fi
+done
+
+./extract -ni $ni -nf $nf -ns $ns -run $run
+./sortit -ni $ni -nf $nf -ns $ns -egrav $egrav
+./enc -nsph sorted_${nsph}.dat -nmesa profile.starsmash
+
+\cd ..
+
+echo ""
+echo "Success"
+
+exit 0

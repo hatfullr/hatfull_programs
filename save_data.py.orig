@@ -1,0 +1,115 @@
+import numpy as np
+import glob
+import read_sph_data as rsd
+import warnings
+import os
+
+warnings.filterwarnings('ignore')
+
+simdir = "/home/hatfull/data/ulfhednar/dynamical/d003u_b002u_1.195M_0.32M_40k_1_1.2G0.32C0.32D_ncooling1/"
+datafiles = sorted(glob.iglob(simdir+'out*.sph'))
+
+trash, header = rsd.read(datafiles[0],return_header=True,fmt_extra='f8,f8,f8',size_extra=24)
+x = np.array([[0.]*int(header[0])]) #Make array of size ntot
+y = np.array([[0.]*int(header[0])]) #Make array of size ntot
+z = np.array([[0.]*int(header[0])]) #Make array of size ntot
+m = np.array([[0.]*int(header[0])]) #Make array of size ntot
+h = np.array([[0.]*int(header[0])]) #Make array of size ntot
+rho = np.array([[0.]*int(header[0])]) #Make array of size ntot
+vx = np.array([[0.]*int(header[0])]) #Make array of size ntot
+vy = np.array([[0.]*int(header[0])]) #Make array of size ntot
+vz = np.array([[0.]*int(header[0])]) #Make array of size ntot
+vxdot = np.array([[0.]*int(header[0])]) #Make array of size ntot
+vydot = np.array([[0.]*int(header[0])]) #Make array of size ntot
+vzdot = np.array([[0.]*int(header[0])]) #Make array of size ntot
+u = np.array([[0.]*int(header[0])]) #Make array of size ntot
+udot = np.array([[0.]*int(header[0])]) #Make array of size ntot
+grpot = np.array([[0.]*int(header[0])]) #Make array of size ntot
+meanmolecular = np.array([[0.]*int(header[0])]) #Make array of size ntot
+cc = np.array([[0.]*int(header[0])]) #Make array of size ntot
+divv = np.array([[0.]*int(header[0])]) #Make array of size ntot
+ueq = np.array([[0.]*int(header[0])]) #Make array of size ntot
+tthermal = np.array([[0.]*int(header[0])]) #Make array of size ntot
+sep0 = np.array([]) #Make array of size ntot
+t = np.array([]) #Make array of size ntot
+omega2 = np.array([]) #Make array of size ntot
+erad = np.array([]) #Make array of size ntot
+
+for datafile in datafiles:
+    data_code,header = rsd.read(datafile,return_header=True,fmt_extra='f8,f8,f8',size_extra=24) # Manually added temperature to output
+
+    x = np.append(x,[data_code[:,0]],0)
+    y = np.append(y,[data_code[:,1]],0)
+    z = np.append(z,[data_code[:,2]],0)
+    m = np.append(m,[data_code[:,3]],0)
+    h = np.append(h,[data_code[:,4]],0)
+    rho = np.append(rho,[data_code[:,5]],0)
+    vx = np.append(vx,[data_code[:,6]],0)
+    vy = np.append(vy,[data_code[:,7]],0)
+    vz = np.append(vz,[data_code[:,8]],0)
+    vxdot = np.append(vxdot,[data_code[:,9]],0)
+    vydot = np.append(vydot,[data_code[:,10]],0)
+    vzdot = np.append(vzdot,[data_code[:,11]],0)
+    u = np.append(u,[data_code[:,12]],0)
+    udot = np.append(udot,[data_code[:,13]],0)
+    grpot = np.append(grpot,[data_code[:,14]],0)
+    meanmolecular = np.append(meanmolecular,[data_code[:,15]],0)
+    cc = np.append(cc,[data_code[:,16]],0)
+    divv = np.append(divv,[data_code[:,17]],0)
+    
+    if header[19] != 0:
+        ueq = np.append(ueq,[data_code[:,18]],0)
+        tthermal = np.append(tthermal,[data_code[:,19]],0)
+
+    sep0 = np.append(sep0,header[4])
+    t = np.append(t,header[9])
+    omega2 = np.append(omega2,header[18])
+    erad = np.append(erad,header[20])
+
+x = np.delete(x,(0),axis=0)
+y = np.delete(y,(0),axis=0)
+z = np.delete(z,(0),axis=0)
+m = np.delete(m,(0),axis=0)
+h = np.delete(h,(0),axis=0)
+rho = np.delete(rho,(0),axis=0)
+vx = np.delete(vx,(0),axis=0)
+vy = np.delete(vy,(0),axis=0)
+vz = np.delete(vz,(0),axis=0)
+vxdot = np.delete(vxdot,(0),axis=0)
+vydot = np.delete(vydot,(0),axis=0)
+vzdot = np.delete(vzdot,(0),axis=0)
+u = np.delete(u,(0),axis=0)
+udot = np.delete(udot,(0),axis=0)
+grpot = np.delete(grpot,(0),axis=0)
+meanmolecular = np.delete(meanmolecular,(0),axis=0)
+cc = np.delete(cc,(0),axis=0)
+divv = np.delete(divv,(0),axis=0)
+ueq = np.delete(ueq,(0),axis=0)
+tthermal = np.delete(tthermal,(0),axis=0)
+
+if not os.path.isdir("data"): os.makedirs("data")
+
+np.save("data/x",x)
+np.save("data/y",y)
+np.save("data/z",z)
+np.save("data/m",m)
+np.save("data/h",h)
+np.save("data/rho",rho)
+np.save("data/vx",vx)
+np.save("data/vy",vy)
+np.save("data/vz",vz)
+np.save("data/vxdot",vxdot)
+np.save("data/vydot",vydot)
+np.save("data/vzdot",vzdot)
+np.save("data/u",u)
+np.save("data/udot",udot)
+np.save("data/grpot",grpot)
+np.save("data/meanmolecular",meanmolecular)
+np.save("data/cc",cc)
+np.save("data/divv",divv)
+np.save("data/ueq",ueq)
+np.save("data/tthermal",tthermal)
+np.save("data/sep0",sep0)
+np.save("data/t",t)
+np.save("data/omega2",omega2)
+np.save("data/erad",erad)

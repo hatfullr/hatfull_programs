@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# This will decompress a starsmasher directory that was
+# comrpessed using compress_starsmasher.
+
+check () {
+    if [ $? -ne 0 ]; then
+	echo "ERROR"
+	exit
+    fi
+}
+
+echo "Decompressing compress_starsmasher.tar.gz"
+SIZE1=$(du -h compress_starsmasher.tar.gz | awk '{print $1}')
+tar -xvzpf compress_starsmasher.tar.gz > filenames.compress_starsmasher
+check
+echo "Removing compress_starsmasher.tar.gz"
+\rm -f compress_starsmasher.tar.gz
+check
+echo "Success."
+SIZE2=$(du -ch $(cat filenames.compress_starsmasher) | tail -1 | awk '{print $1}')
+\rm -f filenames.compress_starsmasher
+echo "ASCII file size inflated from $SIZE1 to $SIZE2"

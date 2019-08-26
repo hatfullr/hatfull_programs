@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#Give this program a file that contains the StarSmasher output which
+#contains lines such as " >>> SPHgrav_lib took 0.0266967 sec" etc.
+
+if [ -f $1 ]; then
+    grep " >>> SPHgrav_lib took" $1 | awk '{sum+=$4}END{print "Simulation took",sum/60/60,"GPU hours"}'
+else
+    echo "ERROR: Could not find file $1."
+fi
