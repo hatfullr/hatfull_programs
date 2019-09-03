@@ -24,13 +24,20 @@ if [ $? -ne 0 ] || [[ "$profilefile" == "" ]]; then
     exit 1
 fi
 
+lastout=$(ls out*.sph | tail -n1)
+if [ $? -ne 0 ] || [[ "$lastout" == "" ]]; then
+    echo "ERROR: Could not find the last output file"
+    exit 1
+fi
 
-ni=0100
-nf=0100
+lastout_num=$(echo $lastout | cut -c4-7)
+
+ni=$lastout_num
+nf=$lastout_num
 ns=1
 run=1
 egrav=1
-nsph=0100
+nsph=$lastout_num
 
 mydir=energy_profile_comparison
 
