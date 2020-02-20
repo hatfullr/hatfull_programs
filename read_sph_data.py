@@ -96,6 +96,8 @@ Version 2.0.3
 
 
 ** Changes:
+   2.0.4
+      - Improved how read errors are reported.
    2.0.3
       - Moved the def statement to below this comment block.
       - Reformatted the comment block and made some edits.
@@ -104,7 +106,6 @@ Version 2.0.3
 
    2.0.1
       - Added compatibility for dynamical runs that have ncooling turned on.
-
    2.0.0
       - Basically completely revamped the program. It now runs ~100x faster, and I don't think it can be
         significantly optimized any further.
@@ -167,25 +168,22 @@ def read(filename,
             dsize+=16
 
         if return_data:
+            dtype = fmt_dataline+fmt_extra+',f8'
+            data = np.zeros((lines,dtype.count(',')+1))
             try:
                 #data = np.ndarray(shape=(1,lines),
                 #                  dtype=np.dtype(fmt_dataline+fmt_extra+',f8'),
                 #                  buffer=f.read(lines*dsize))[0].astype(dsize*'f8,').view(dtype='f8').reshape(lines,dsize)[:,:-1]
-            
-                dtype = fmt_dataline+fmt_extra+',f8'
-                data = np.zeros((lines,dtype.count(',')+1))
                 
                 data[:] = np.ndarray(shape=(1,lines),
                                      dtype=np.dtype(dtype),
                                      buffer=f.read(lines*dsize))[0].tolist()[:]
-                data=data[:,:-1]
-                
             except:
-                print "read_sph_data.py:"
-                print "  Error: Failed to read '"+filename+"'. Make sure your fmt_dataline is correct. Open read_sph_data.py for more help."
-                sys.exit()
+                print("read_sph_data.py: Failed to read '"+filename+"'. Make sure your fmt_dataline is correct. Open read_sph_data.py for more help.")
+                raise
             
-
+            data=data[:,:-1]
+            
             if return_header: return data,header
             else: return data
         else:
