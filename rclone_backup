@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# You need to have rclone setup on your machine before running this,
+# and the rclone executable needs to be located somewhere in your PATH
+# variable.
+
+# When running for the first time, edit the destination location to
+# where you want it to go on your Google Drive
+
+# You can pass any arguments you like, but by default -l is turned on
+# to save links as files with ".rclonelink". Otherwise, rclone crashes
+# when it encounters a symlink (might work normally when not sending to
+# Google Drive).
+
+# Do not use options that require string arguments that point to real
+# directories/files/symlinks. These string arguments will be confused
+# with objects to backup.
+
+Gdrive_dir=Computer_Backups/Ulfhednar
+
+opts=""
+dirs=()
+for var in "$@"; do
+    if [[ -e "$var" ]] || [[ -L "$var" ]]; then
+	# Get the full path, resolving all symbolic links
+        dirs+=("$(readlink -f $var)")
+    else
+	# This must be a command option
+	opts="$opts $var"
+    fi
+done
+
+for dir in ${dirs[@]}; do
+    echo "rclone sync -l $opts $dir remote:$Gdrive_dir$dir"
+    rclone sync -l $opts $dir remote:$Gdrive_dir$dir
+done
+
