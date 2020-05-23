@@ -32,6 +32,15 @@ done
 
 for dir in ${dirs[@]}; do
     echo "rclone sync -l $opts $dir remote:$Gdrive_dir$dir"
-    rclone sync -l $opts $dir remote:$Gdrive_dir$dir
 done
+echo ""
+read -s -p "Run the above commands (y/n)?: " input
+echo ""
+
+if [[ "$input" == "y" ]]; then
+    for dir in ${dirs[@]}; do
+	echo "rclone sync -l $opts $dir remote:$Gdrive_dir$dir"
+	rclone sync -l $opts $dir remote:$Gdrive_dir$dir
+    done
+fi
 
