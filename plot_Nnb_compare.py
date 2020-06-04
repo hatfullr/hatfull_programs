@@ -23,8 +23,8 @@ for f in files:
 
 fig, ax = plt.subplots(dpi=200)
 
-for f in files:
-    data = np.loadtxt(f)
+for f in range(0,len(files)):
+    data = np.loadtxt(files[f])
     r = data[:,0]
     Nnb = data[:,7]
     u = data[:,14]
@@ -32,14 +32,14 @@ for f in files:
     core_idx = np.where(u==0)[0]
     idx = np.arange(len(data))
 
-    label = f[-15:]
+    label = files[f][-15:]
     
     if len(core_idx) == 1:
-        sc = ax.scatter(r[idx != core_idx],Nnb[idx != core_idx],s=1,label=label)
+        sc = ax.scatter(r[idx != core_idx],Nnb[idx != core_idx],s=1,label=label,zorder=len(files)-f)
         c = sc.get_facecolors()
-        ax.scatter(r[core_idx],Nnb[core_idx],s=50,facecolors='none',edgecolors=c)
+        ax.scatter(r[core_idx],Nnb[core_idx],s=50,facecolors='none',edgecolors=c,zorder=len(files)-f)
     else:
-        ax.scatter(r,Nnb,s=1,label=label)
+        ax.scatter(r,Nnb,s=1,label=label,zorder=len(files)-f)
 
 ax.legend()
         
