@@ -9,7 +9,7 @@ def trapezoidal(x,y,xlim=(None,None)):
     if xlim[0] is not None:
         if xlim[0] in x:
             i = np.arange(len(x))[x==xlim[0]]
-            if any(i):
+            if sum(i) >= 0:
                 i = i[0]
                 x = x[i:]
                 y = y[i:]
@@ -28,7 +28,7 @@ def trapezoidal(x,y,xlim=(None,None)):
     if xlim[1] is not None:
         if xlim[1] in x:
             i = np.arange(len(x))[x==xlim[1]]
-            if any(i):
+            if sum(i) >= 0:
                 i = i[0]
                 x = x[:i+1]
                 y = y[:i+1]
