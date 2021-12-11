@@ -6,48 +6,55 @@ def trapezoidal(x,y,xlim=(None,None)):
     x = np.array(x)
     y = np.array(y)
     
-    if xlim[0] is not None:
+    if xlim[0] is not None and xlim[0] not in [x[0],x[-1]]:
         if xlim[0] in x:
             i = np.arange(len(x))[x==xlim[0]]
             if sum(i) >= 0:
                 i = i[0]
-                x = x[i:]
-                y = y[i:]
+                if x[0] > x[-1]:
+                    x = x[:i+1]
+                    y = y[:i+1]
+                else:
+                    x = x[i:]
+                    y = y[i:]
             else:
                 raise RuntimeError("Something went wrong while trying to find xlim[0] in x")
         else:
             # Find the closest lower bound
-            for i, elem in enumerate(x):
-                if elem > xlim[0]:
+            for i in range(len(x)-1):
+                if x[i] < xlim[0] and xlim[0] < x[i+1]:
                     f = interp1d(x,y)
-                    x = np.append([xlim[0]],x[i:])
-                    y = np.append([f(xlim[0])],y[i:])
+                    x = np.append([xlim[0]],x[i+1:])
+                    y = np.append([f(xlim[0])],y[i+1:])
                     break
             else:
                 raise ValueError("Keyword 'xlim' contains a lower bound outside the given x data.")
-    if xlim[1] is not None:
+    if xlim[1] is not None and xlim[1] not in [x[0],x[-1]]:
         if xlim[1] in x:
             i = np.arange(len(x))[x==xlim[1]]
             if sum(i) >= 0:
                 i = i[0]
-                x = x[:i+1]
-                y = y[:i+1]
+                if x[0] > x[-1]:
+                    x = x[i:]
+                    y = y[i:]
+                else:
+                    x = x[:i+1]
+                    y = y[:i+1]
             else:
                 raise RuntimeError("Something went wrong while trying to find xlim[1] in x")
         else:
             # Find the closest upper bound
-            for i in range(-len(x),0):
-                if x[i] < xlim[1]:
+            for i in range(len(x)-1):
+                if x[i] < xlim[1] and xlim[1] < x[i+1]:
                     f = interp1d(x,y)
-                    x = np.append(x[:i+1],[xlim[1]])
-                    y = np.append(y[:i+1],[f(xlim[1])])
+                    x = np.append(x[:i],xlim[1])
+                    y = np.append(y[:i],f(xlim[1]))
                     break
             else:
-                raise ValueError("Keyword 'xlim' contains a lower bound outside the given x data.")
-        
+                raise ValueError("Keyword 'xlim' contains an upper bound outside the given x data.")
     dx = np.diff(x)
     halfdx = 0.5*dx
-    result = np.zeros(len(y))
+    result = np.zeros(len(x))
     y1 = y[0]
     d = 0
     for i,y2 in enumerate(y[1:]):
